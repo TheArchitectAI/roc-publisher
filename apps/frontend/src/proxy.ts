@@ -25,7 +25,16 @@ export async function proxy(request: NextRequest) {
           request.headers.get('accept-language')
       );
 
-  const topResponse = NextResponse.next();
+  const requestHeaders = new Headers(request.headers);
+  if (lng) {
+    requestHeaders.set(headerName, lng);
+  }
+
+  const topResponse = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 
   if (lng) {
     topResponse.headers.set(cookieName, lng);
