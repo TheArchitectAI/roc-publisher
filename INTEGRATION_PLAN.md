@@ -7,6 +7,7 @@
 > **Supersedes:**
 >   - `~/Workspace/_archive/roc-publisher-v1-express/` (Express-based service, shipped 2026-04-19 morning, never deployed — carousel/collab work is reference only)
 >   - Most of `mortgagearchitect-ai/docs/superpowers/specs/2026-04-19-mortgagearchitect-publisher-meta-mvp.md` (greenfield plan made obsolete by fork)
+>   - **Blotato (DEPRECATED 2026-04-20)** — all 4 active Blotato n8n workflows deactivated; see `architect-os/vault/memory/project_blotato_deprecated.md`. Subscription cancel-after-Postiz-proven pending Ivan action.
 
 ---
 
