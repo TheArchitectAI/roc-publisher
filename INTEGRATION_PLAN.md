@@ -147,20 +147,32 @@ Postiz has `slack.provider.ts`. For team chatter we add interactive approval car
 | # | Task | Owner | Est |
 |---|---|---|---|
 | 1 | Fork created, INTEGRATION_PLAN.md committed, upstream tracked | ✅ Done 2026-04-19 | — |
-| 2 | Pnpm install, local dev boot (`docker-compose.dev.yaml`), verify Postiz admin UI loads on localhost | Next session | 30 min |
-| 3 | Gemini + Codex audit of this plan (Dual Approval Gate) | Blocks 4+ | 30 min |
-| 4 | Deploy stock Postiz to Cloud Run with ROC branding + custom domain | Session | 2 hrs |
-| 5 | MA-AI SSO bridge | Session | 1 hr |
-| 6 | Connect Ivan's IG (@the_mortgage_architect) + FB page → test post | Session | 30 min |
-| 7 | Compliance middleware (NMLS footer auto-append) | Session | 30 min |
-| 8 | HITL mirror bridge to MA-AI `/api/hitl/mirror` | Session | 1 hr |
-| 9 | Partner workspace auto-provisioner (Rey first) | Session | 1 hr |
-| 10 | n8n CONTENT-POST-01 rewired to use Postiz SDK | Session | 1 hr |
-| 11 | Archive Surface `social-poster.mjs` | Session | 15 min |
-| 12 | 30-day parallel run: Postiz + existing POST-02 | — | 30 days |
-| 13 | Cancel Blotato, archive POST-02/POST-03 | — | — |
+| 2 | Local boot test + deploy artifacts written (`deploy/`) | ✅ Done 2026-04-20 | 30 min |
+| 3 | Gemini audit of integration plan + carousel-system + deprecation memos | ✅ GO 2026-04-20 | — |
+| 4a | **Option A (cheap):** roclaw-new co-located deploy via `deploy/roclaw-gce-bootstrap.sh` | Awaits Ivan | 30 min |
+| 4b | **Option B (managed):** Full Cloud Run deploy — `deploy/gcp-provision.sh` → `deploy/push-image.sh` → `deploy/cloud-run-deploy.sh` | Awaits Ivan | 90 min |
+| 5 | Fill OAuth secrets (Meta/LI/TikTok/YT via Developer Portals) | Ivan | 30 min per platform |
+| 6 | Map `publisher.rochomeloans.com` → service URL (Cloudflare or Cloud Run domain mapping) | Session | 10 min |
+| 7 | Connect Ivan's IG (@the_mortgage_architect) + FB page → test post | Session | 30 min |
+| 8 | MA-AI SSO bridge | Session | 1 hr |
+| 9 | Compliance middleware (NMLS footer auto-append) | Session | 30 min |
+| 10 | HITL mirror bridge to MA-AI `/api/hitl/mirror` | Session | 1 hr |
+| 11 | Partner workspace auto-provisioner (Rey first) | Session | 1 hr |
+| 12 | n8n CONTENT-POST-01 rewired to use Postiz SDK | Session | 1 hr |
+| 13 | Archive Surface `social-poster.mjs` | Session | 15 min |
+| 14 | 30-day parallel run: Postiz + existing POST-02 | — | 30 days |
+| 15 | Cancel Blotato (already functionally dead — payments failing), archive POST-02/POST-03 | — | — |
 
 **Total integration effort: ~7–8 hours across 2–3 sessions.**
+
+## Phase 2 deliverables (2026-04-20)
+
+- `deploy/README.md` — two deploy paths documented with cost breakdowns
+- `deploy/gcp-provision.sh` — one-shot Cloud SQL + Memorystore + Secret Manager setup (idempotent)
+- `deploy/push-image.sh` — Cloud Build → Artifact Registry
+- `deploy/cloud-run-deploy.sh` — `gcloud run deploy` with all secrets wired via `--set-secrets`
+- `deploy/roclaw-gce-bootstrap.sh` — cheaper path: run on roclaw-new, co-locate with OpenClaw
+- Local `docker compose up -d` pulled Postiz image + started Postgres + Redis + Temporal siblings; initial boot triggered (pull-in-progress at commit time — image ~500MB; expect ready within 5–10 min)
 
 ---
 
