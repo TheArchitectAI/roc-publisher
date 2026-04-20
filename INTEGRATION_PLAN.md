@@ -165,6 +165,44 @@ Postiz has `slack.provider.ts`. For team chatter we add interactive approval car
 
 **Total integration effort: ~7–8 hours across 2–3 sessions.**
 
+---
+
+## Phase 3 (FUTURE) — Fold Postiz into the roc-ai dashboard
+
+Ivan's direction (2026-04-20): don't ship `publisher.rochomeloans.com` as a separate tool. Postiz should look and feel **inside** the `roc-ai` dashboard at `/home/dwizy/Workspace/roc-ai/`, not as a stand-alone app.
+
+**Goal:** A single admin shell (roc-ai) with a "Publisher" module/tab that gives Ivan + team the Postiz functionality (calendar, drafts, approve, publish) without ever leaving roc-ai.
+
+### Three implementation options (decision pending)
+
+| Option | Effort | Tradeoff |
+|---|---|---|
+| **A. Iframe embed** | ~2 hrs | Fastest. Add a `/publisher` route in roc-ai that iframes Postiz at a private URL. Session cookie shared via same origin. Visual drift — Postiz's UI still peeks through the iframe chrome. |
+| **B. Reverse-proxy unified domain** | ~4 hrs | Cleaner. Mount Postiz at `app.rochomeloans.com/publisher/*` via an nginx / Cloud Run path rewrite. Single session cookie. Login/logout share state. ROC rebrand layer already matches dark-navy + gold, so visual fit is OK. |
+| **C. Headless Postiz — roc-ai owns the UI** | ~20+ hrs | Best long-term. Strip Postiz frontend entirely. roc-ai implements the draft/calendar/approve/publish UX against Postiz's REST/GraphQL API. Full ROC design system. Upstream Postiz frontend merges become irrelevant. |
+
+### Current state
+
+- `roc-ai` is a React/Vite dashboard (`/home/dwizy/Workspace/roc-ai/src/`), already wired to the MortgageArchitect backend, ROC noir-gold visual style established.
+- Postiz fork is source-rebranded (gold #FFB703 primary, "ROC · PUBLISHER" wordmark) — option B or A would look cohesive; option C would wholly supplant.
+- `publisher.rochomeloans.com` as a public domain is **postponed** — everything lives behind `app.rochomeloans.com/publisher/*` when Phase 3 ships.
+
+### Next actions when Phase 3 starts
+
+1. Decide option A / B / C with Ivan
+2. If A or B: sketch the iframe / reverse-proxy route in roc-ai + a session-bridge mechanism (roc-ai JWT → Postiz session)
+3. If C: generate the Postiz OpenAPI / GraphQL schema, scaffold the React module in roc-ai
+4. Keep Phase 2 deploy artifacts (`deploy/*.sh`) usable — Postiz still needs to run somewhere; Phase 3 just changes WHO renders its UI.
+5. Blotato subscription cleanup + BRAIN-01 → Postiz draft API wiring happen independent of option A/B/C.
+
+### Phase 2 status at pause
+
+- ✅ Fork + INTEGRATION_PLAN + upstream remote
+- ✅ Deploy scripts shipped (`deploy/`) — Cloud Run + GCE colocate both ready
+- ✅ Frontend rebrand committed (`f6215197`)
+- ⏸️ **Deploy paused** — `publisher.rochomeloans.com` won't exist as a standalone surface. Next deploy attempt happens only when Phase 3 option is picked.
+- ✅ Local dev container is still up (`docker compose ps` → healthy) for ad-hoc exploration.
+
 ## Phase 2 deliverables (2026-04-20)
 
 - `deploy/README.md` — two deploy paths documented with cost breakdowns
