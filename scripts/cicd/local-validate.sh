@@ -25,10 +25,34 @@ run() {
 ACTIONLINT_VERSION="${ACTIONLINT_VERSION:-1.7.12}"
 mkdir -p .bin
 if [ ! -x .bin/actionlint ]; then
-  echo "(installing actionlint v${ACTIONLINT_VERSION} into .bin/)"
-  curl -fsSL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" -o /tmp/actionlint.tgz
-  tar -xzf /tmp/actionlint.tgz -C /tmp actionlint
-  install -m 755 /tmp/actionlint .bin/actionlint
+  # Cross-platform OS/arch detection — Codex finding on PR #1 iter-4: previous
+  # version was Linux-only (hardcoded _linux_amd64.tar.gz) so macOS/arm64 devs
+  # got exec-format errors. Now matches release artifact naming conventions.
+  case "$(uname -s)" in
+    Linux*)  os=linux ;;
+    Darwin*) os=darwin ;;
+    MINGW*|MSYS*|CYGWIN*) os=windows ;;
+    *) echo "Unsupported OS: $(uname -s)" >&2; exit 1 ;;
+  esac
+  case "$(uname -m)" in
+    x86_64|amd64) arch=amd64 ;;
+    aarch64|arm64) arch=arm64 ;;
+    i386|i686) arch=386 ;;
+    armv7l) arch=armv7 ;;
+    armv6l) arch=armv6 ;;
+    *) echo "Unsupported arch: $(uname -m)" >&2; exit 1 ;;
+  esac
+  ext="tar.gz"
+  [ "$os" = "windows" ] && ext="zip"
+  echo "(installing actionlint v${ACTIONLINT_VERSION} for ${os}_${arch} into .bin/)"
+  curl -fsSL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_${os}_${arch}.${ext}" -o /tmp/actionlint.tgz
+  if [ "$ext" = "zip" ]; then
+    unzip -o /tmp/actionlint.tgz -d /tmp actionlint.exe >/dev/null
+    install -m 755 /tmp/actionlint.exe .bin/actionlint
+  else
+    tar -xzf /tmp/actionlint.tgz -C /tmp actionlint
+    install -m 755 /tmp/actionlint .bin/actionlint
+  fi
 fi
 run "actionlint" .bin/actionlint -color
 
