@@ -3,7 +3,7 @@ import type { Config } from 'jest';
 const config: Config = {
   preset: './jest.preset.js',
   rootDir: '.',
-  testMatch: ['<rootDir>/**/*.spec.ts', '<rootDir>/**/*.test.ts'],
+  testMatch: ['<rootDir>/**/*.spec.{ts,tsx}', '<rootDir>/**/*.test.{ts,tsx}'],
   testPathIgnorePatterns: [
     '/node_modules/',
     '/dist/',
