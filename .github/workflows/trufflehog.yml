@@ -16,6 +16,6 @@ jobs:
           fetch-depth: 0
 
       - name: Run trufflehog
-        uses: trufflesecurity/trufflehog@main
+        uses: trufflesecurity/trufflehog@v3.95.3  # Pinned (Codex review on PR #1) — bump intentionally to refresh
         with:
           extra_args: --only-verified

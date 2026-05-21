@@ -19,11 +19,16 @@ run() {
   fi
 }
 
-# 1. actionlint (download if missing — drop into ./.bin to avoid PATH conflicts)
+# 1. actionlint — download a pinned release if missing.
+# Codex finding (PR #1 iter-2): the upstream installer script from main is
+# mutable. Pin to the same version that CI uses (see .github/workflows/actionlint.yml).
+ACTIONLINT_VERSION="${ACTIONLINT_VERSION:-1.7.12}"
 mkdir -p .bin
 if [ ! -x .bin/actionlint ]; then
-  echo "(installing actionlint into .bin/)"
-  (cd .bin && bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) >/dev/null)
+  echo "(installing actionlint v${ACTIONLINT_VERSION} into .bin/)"
+  curl -fsSL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" -o /tmp/actionlint.tgz
+  tar -xzf /tmp/actionlint.tgz -C /tmp actionlint
+  install -m 755 /tmp/actionlint .bin/actionlint
 fi
 run "actionlint" .bin/actionlint -color
 
