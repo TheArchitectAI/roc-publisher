@@ -1,16 +1,27 @@
-# actionlint config — narrow ignore for pre-existing upstream issues.
+# actionlint config — narrow ignores for pre-existing upstream Postiz workflow issues.
 #
-# Added 2026-05-21 (Phase 2 Task B) to install the actionlint gate without
-# touching upstream Postiz workflow files. The roc-publisher repo is a fork
-# of gitroomhq/postiz-app; modifying upstream-maintained workflows risks
-# merge conflicts on future upstream pulls.
+# Added 2026-05-21 (Phase 2 Task B + iter-1 fix) to install the actionlint gate
+# without touching upstream-maintained workflow files. The roc-publisher repo is
+# a fork of gitroomhq/postiz-app; modifying upstream-maintained workflows risks
+# merge conflicts on future upstream pulls. Each ignore should be filed upstream
+# OR re-evaluated when we next sync from upstream.
+
 self-hosted-runner:
   labels: []
+
 paths:
   ".github/workflows/stale.yml":
     ignore:
       # stale.yml:30 uses `exempt-pr-label` (singular) — actions/stale@v9
-      # expects `exempt-pr-labels` (plural). Pre-existing typo in the upstream
-      # Postiz workflow. Submit upstream PR or fix when we next sync from
-      # upstream. Suppressed here to keep actionlint as a clean PR gate.
+      # expects `exempt-pr-labels` (plural). Pre-existing upstream typo.
       - 'input "exempt-pr-label" is not defined'
+  ".github/workflows/build.yml":
+    ignore:
+      # build.yml:35 SC2086 unquoted variable expansion in upstream Postiz CI.
+      # Surfaced when actionlint runs on PR diffs (paths filter previously hid it).
+      - 'shellcheck reported issue in this script: SC2086'
+  ".github/workflows/pr-docker-build.yml":
+    ignore:
+      # pr-docker-build.yml:32/35/38 SC2086 unquoted $GITHUB_ENV + $IMAGE_TAG.
+      # Pre-existing upstream Postiz workflow.
+      - 'shellcheck reported issue in this script: SC2086'
