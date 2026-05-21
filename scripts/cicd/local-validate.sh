@@ -113,16 +113,10 @@ else
   echo "  (no check script in package.json — skipping)"
 fi
 
-# 5. Tests — DELIBERATELY SKIPPED in roc-publisher (Phase 2 Task B.1 follow-up).
-# `pnpm test` invokes `jest --coverage` but jest.config.ts requires `@nx/jest`
-# which is not installed in this monorepo's root. Audit (2026-05-20) also
-# found 0 test files in the repo. Restore this step after:
-#   - @nx/jest installed (or jest config switched off Nx)
-#   - Test files added
-# Until then, skipping cleanly so the validator's "Safe to push" signal stays honest.
-echo
-echo "▶ tests"
-echo "  (skipped — see comment in scripts/cicd/local-validate.sh; Phase 2 Task B.1 follow-up)"
+# 5. Tests — roc-publisher B.1 restored this gate by removing the shallow
+# @nx/jest config dependency and adding a smoke test. This closes the gap that
+# existed through base commit 726e7116; the final PR commit SHA resolves it.
+run "pnpm test" pnpm test
 
 # Summary
 echo
