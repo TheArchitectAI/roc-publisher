@@ -40,7 +40,10 @@ fi
 # Codex finding (roc-publisher #1): `^\+[^+]` also drops legit added lines
 # starting with `+` (e.g. `+123-45-6789` in markdown). Fix: explicitly exclude
 # diff file headers (`+++ b/file`) instead of all double-plus lines.
-ADDED=$(echo "$DIFF" | grep -E '^\+' | grep -vE '^\+\+\+ ' | sed 's/^\+//')
+# Codex iter-5: previous `^\+\+\+ ` filter also dropped legit added lines
+# that start with `++ ` content (which appears as `+++ ` in unified diff).
+# Tighten to match only real diff file headers (`+++ b/path` or `+++ a/path`).
+ADDED=$(echo "$DIFF" | grep -E '^\+' | grep -vE '^\+\+\+ [ab]/' | sed 's/^\+//')
 if [ -z "$ADDED" ]; then
   exit 0
 fi
