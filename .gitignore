@@ -59,3 +59,6 @@ Thumbs.db
 libraries/plugins/src/plugins.ts
 i18n.cache
 /.bin/
+
+# jest-junit reporter output (CI artifact)
+reports/
