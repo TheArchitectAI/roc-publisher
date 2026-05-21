@@ -1,0 +1,32 @@
+name: actionlint
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# NOTE: actionlint must always produce a check so it can be required in branch
+# protection. Do not add paths filters here.
+
+permissions:
+  contents: read
+
+jobs:
+  actionlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install actionlint
+        # Pin to a specific actionlint release (Codex finding on PR #1) — using
+        # the mutable main installer means upstream changes silently affect every
+        # PR. Bump this version intentionally to refresh.
+        env:
+          ACTIONLINT_VERSION: '1.7.12'
+        run: |
+          curl -fsSL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" -o /tmp/actionlint.tgz
+          tar -xzf /tmp/actionlint.tgz -C /tmp actionlint
+          install -m 755 /tmp/actionlint "${GITHUB_WORKSPACE}/actionlint"
+          echo "${GITHUB_WORKSPACE}" >> "${GITHUB_PATH}"
+
+      - name: Run actionlint
+        run: actionlint -color
