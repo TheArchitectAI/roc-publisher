@@ -16,6 +16,6 @@ jobs:
           fetch-depth: 0
 
       - name: Run trufflehog
-        uses: trufflesecurity/trufflehog@v3.95.3  # Pinned (Codex review on PR #1) — bump intentionally to refresh
+        uses: trufflesecurity/trufflehog@37b77001d0174ebec2fcca2bd83ff83a6d45a3ab  # v3.95.3 — SHA-pinned for immutable supply-chain (closes drift after MA #242 / roc-ai #23)
         with:
           extra_args: --only-verified
