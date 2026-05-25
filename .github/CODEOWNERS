@@ -1,13 +1,13 @@
-* @ivanduarte
+* @TheArchitectAI
 
 # Application and shared library code
-/apps/ @ivanduarte
-/libraries/ @ivanduarte
+/apps/ @TheArchitectAI
+/libraries/ @TheArchitectAI
 
 # Runtime, deploy, and container boundaries
-/deploy/ @ivanduarte
-/Dockerfile @ivanduarte
-/Dockerfile.* @ivanduarte
+/deploy/ @TheArchitectAI
+/Dockerfile @TheArchitectAI
+/Dockerfile.* @TheArchitectAI
 
 # Repository automation
-/.github/workflows/ @ivanduarte
+/.github/workflows/ @TheArchitectAI
