@@ -8,7 +8,6 @@ import { makeId } from '@gitroom/nestjs-libraries/services/make.is';
 import dayjs from 'dayjs';
 import { SocialAbstract } from '@gitroom/nestjs-libraries/integrations/social.abstract';
 import { NeynarAPIClient } from '@neynar/nodejs-sdk';
-import type { PostCastReqBodyEmbeds } from '@neynar/nodejs-sdk/build/api/models/post-cast-req-body-embeds';
 import { Integration } from '@prisma/client';
 import { FarcasterDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/farcaster.dto';
 import { Tool } from '@gitroom/nestjs-libraries/integrations/tool.decorator';
@@ -20,8 +19,9 @@ const client = new NeynarAPIClient({
 
 const mapMediaToEmbeds = (
   media: PostDetails<FarcasterDto>['media'] | undefined
-): PostCastReqBodyEmbeds[] =>
-  media?.map((item): PostCastReqBodyEmbeds => ({ url: item.path })) || [];
+): any[] =>
+  // Neynar accepts URL embeds at runtime, but its generated TS union marks cast-id fields as required in CI.
+  media?.map((item) => ({ url: item.path })) || [];
 
 @Rules(
   'Farcaster/Warpcast can only accept pictures'
