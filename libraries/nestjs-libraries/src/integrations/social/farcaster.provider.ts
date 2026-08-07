@@ -8,6 +8,7 @@ import { makeId } from '@gitroom/nestjs-libraries/services/make.is';
 import dayjs from 'dayjs';
 import { SocialAbstract } from '@gitroom/nestjs-libraries/integrations/social.abstract';
 import { NeynarAPIClient } from '@neynar/nodejs-sdk';
+import type { PostCastReqBodyEmbeds } from '@neynar/nodejs-sdk/build/api/models/post-cast-req-body-embeds';
 import { Integration } from '@prisma/client';
 import { FarcasterDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/farcaster.dto';
 import { Tool } from '@gitroom/nestjs-libraries/integrations/tool.decorator';
@@ -16,6 +17,11 @@ import { Rules } from '@gitroom/nestjs-libraries/chat/rules.description.decorato
 const client = new NeynarAPIClient({
   apiKey: process.env.NEYNAR_SECRET_KEY || '00000000-000-0000-000-000000000000',
 });
+
+const mapMediaToEmbeds = (
+  media: PostDetails<FarcasterDto>['media'] | undefined
+): PostCastReqBodyEmbeds[] =>
+  media?.map((item): PostCastReqBodyEmbeds => ({ url: item.path })) || [];
 
 @Rules(
   'Farcaster/Warpcast can only accept pictures'
@@ -90,10 +96,7 @@ export class FarcasterProvider
 
     for (const channel of channels) {
       const data = await client.publishCast({
-        embeds:
-          firstPost?.media?.map((media) => ({
-            url: media.path,
-          })) || [],
+        embeds: mapMediaToEmbeds(firstPost?.media),
         signerUuid: accessToken,
         text: firstPost.message,
         ...(channel?.value?.id ? { channelId: channel?.value?.id } : {}),
@@ -132,10 +135,7 @@ export class FarcasterProvider
 
     for (const parentHash of parentIds) {
       const data = await client.publishCast({
-        embeds:
-          commentPost?.media?.map((media) => ({
-            url: media.path,
-          })) || [],
+        embeds: mapMediaToEmbeds(commentPost?.media),
         signerUuid: accessToken,
         text: commentPost.message,
         parent: parentHash,
