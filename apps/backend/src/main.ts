@@ -19,6 +19,19 @@ import { HttpExceptionFilter } from '@gitroom/nestjs-libraries/services/exceptio
 import { ConfigurationChecker } from '@gitroom/helpers/configuration/configuration.checker';
 import { startMcp } from '@gitroom/nestjs-libraries/chat/start.mcp';
 
+function isScannerProbePath(path: string) {
+  const lowerPath = path.toLowerCase();
+
+  return (
+    lowerPath.endsWith('.php') ||
+    lowerPath.includes('/wp-') ||
+    lowerPath.includes('/wordpress') ||
+    lowerPath.includes('/phpmyadmin') ||
+    lowerPath.includes('/vendor/phpunit') ||
+    lowerPath.includes('/.env')
+  );
+}
+
 async function start() {
   const app = await NestFactory.create(AppModule, {
     rawBody: true,
@@ -45,6 +58,14 @@ async function start() {
         ...(process.env.MAIN_URL ? [process.env.MAIN_URL] : []),
       ],
     },
+  });
+
+  app.use((req: any, res: any, next: any) => {
+    if (isScannerProbePath(req.path || req.url || '')) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    return next();
   });
 
   await startMcp(app);
