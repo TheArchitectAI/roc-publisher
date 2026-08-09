@@ -17,6 +17,12 @@ const client = new NeynarAPIClient({
   apiKey: process.env.NEYNAR_SECRET_KEY || '00000000-000-0000-000-000000000000',
 });
 
+const mapMediaToEmbeds = (
+  media: PostDetails<FarcasterDto>['media'] | undefined
+): any[] =>
+  // Neynar accepts URL embeds at runtime, but its generated TS union marks cast-id fields as required in CI.
+  media?.map((item) => ({ url: item.path })) || [];
+
 @Rules(
   'Farcaster/Warpcast can only accept pictures'
 )
@@ -90,10 +96,7 @@ export class FarcasterProvider
 
     for (const channel of channels) {
       const data = await client.publishCast({
-        embeds:
-          firstPost?.media?.map((media) => ({
-            url: media.path,
-          })) || [],
+        embeds: mapMediaToEmbeds(firstPost?.media),
         signerUuid: accessToken,
         text: firstPost.message,
         ...(channel?.value?.id ? { channelId: channel?.value?.id } : {}),
@@ -132,10 +135,7 @@ export class FarcasterProvider
 
     for (const parentHash of parentIds) {
       const data = await client.publishCast({
-        embeds:
-          commentPost?.media?.map((media) => ({
-            url: media.path,
-          })) || [],
+        embeds: mapMediaToEmbeds(commentPost?.media),
         signerUuid: accessToken,
         text: commentPost.message,
         parent: parentHash,
