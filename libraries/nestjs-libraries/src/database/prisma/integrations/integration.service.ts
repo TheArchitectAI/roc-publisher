@@ -28,6 +28,19 @@ import { TemporalService } from 'nestjs-temporal-core';
 
 dayjs.extend(utc);
 
+const isTrustedImageDeliveryUrl = (picture: string) => {
+  try {
+    const { protocol, hostname } = new URL(picture);
+    return (
+      protocol === 'https:' &&
+      (hostname === 'imagedelivery.net' ||
+        hostname.endsWith('.imagedelivery.net'))
+    );
+  } catch (err) {
+    return false;
+  }
+};
+
 @Injectable()
 export class IntegrationService {
   private storage = UploadFactory.createStorage();
@@ -111,7 +124,7 @@ export class IntegrationService {
     customInstanceDetails?: string
   ) {
     const uploadedPicture = picture
-      ? picture?.indexOf('imagedelivery.net') > -1
+      ? isTrustedImageDeliveryUrl(picture)
         ? picture
         : await this.storage.uploadSimple(picture)
       : undefined;
