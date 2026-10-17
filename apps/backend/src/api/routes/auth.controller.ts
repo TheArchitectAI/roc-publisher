@@ -109,7 +109,11 @@ export class AuthController {
         register: true,
       });
     } catch (e: any) {
-      response.status(400).send(e.message);
+      response
+        .status(400)
+        .header('X-Content-Type-Options', 'nosniff')
+        .type('text/plain')
+        .send(String(e?.message ?? 'Error'));
     }
   }
 
@@ -173,7 +177,11 @@ export class AuthController {
         login: true,
       });
     } catch (e: any) {
-      response.status(400).send(e.message);
+      response
+        .status(400)
+        .header('X-Content-Type-Options', 'nosniff')
+        .type('text/plain')
+        .send(String(e?.message ?? 'Error'));
     }
   }
 

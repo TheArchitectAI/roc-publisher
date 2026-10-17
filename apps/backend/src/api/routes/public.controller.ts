@@ -157,8 +157,9 @@ export class PublicController {
 
   @Post('/crypto/:path')
   async cryptoPost(@Body() body: any, @Param('path') path: string) {
-    console.log('cryptoPost', body, path);
-    return this._nowpayments.processPayment(path, body);
+    console.log('cryptoPost received');
+    await this._nowpayments.processPayment(path, body);
+    return { ok: true };
   }
 
   @Get('/stream')
