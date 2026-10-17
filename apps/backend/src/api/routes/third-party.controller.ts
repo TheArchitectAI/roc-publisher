@@ -16,6 +16,15 @@ import { UploadFactory } from '@gitroom/nestjs-libraries/upload/upload.factory';
 import { MediaService } from '@gitroom/nestjs-libraries/database/prisma/media/media.service';
 import { ImportMediaDto } from '@gitroom/nestjs-libraries/dtos/third-party/import-media.dto';
 
+// Internal plumbing methods that have their own dedicated routes and must not
+// be reachable through the generic /function/:id/:functionName endpoint.
+const NON_CALLABLE_THIRD_PARTY_FUNCTIONS = [
+  'constructor',
+  'checkConnection',
+  'sendData',
+  'importMedia',
+];
+
 @ApiTags('Third Party')
 @Controller('/third-party')
 export class ThirdPartyController {
@@ -116,7 +125,22 @@ export class ThirdPartyController {
       throw new HttpException('Invalid identifier', 400);
     }
 
-    return thirdPartyInstance?.instance?.[functionName](
+    const instance = thirdPartyInstance?.instance;
+    const functionToCall = instance?.[functionName];
+    if (
+      !instance ||
+      NON_CALLABLE_THIRD_PARTY_FUNCTIONS.includes(functionName) ||
+      !Object.prototype.hasOwnProperty.call(
+        Object.getPrototypeOf(instance),
+        functionName
+      ) ||
+      typeof functionToCall !== 'function'
+    ) {
+      throw new HttpException('Function not found', 400);
+    }
+
+    return functionToCall.call(
+      instance,
       AuthService.fixedDecryption(thirdParty.apiKey),
       data
     );

@@ -128,6 +128,19 @@ export class MediaService {
       throw new Error(`Video with identifier ${identifier} not found`);
     }
 
+    if (
+      functionName === 'constructor' ||
+      !Object.prototype.hasOwnProperty.call(
+        Object.getPrototypeOf(video.instance),
+        functionName
+      )
+    ) {
+      throw new HttpException(
+        `Function ${functionName} not found on video instance`,
+        400
+      );
+    }
+
     // @ts-ignore
     const functionToCall = video.instance[functionName];
     if (

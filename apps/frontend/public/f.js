@@ -6109,7 +6109,7 @@ fbq.__openBridgeRollout = 1.0;
 
           function a(a, b) {
             b = new RegExp(
-              '[?#&]' + b.replace(/[\[\]]/g, '\\$&') + '(=([^&#]*)|&|#|$)'
+              '[?#&]' + b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(=([^&#]*)|&|#|$)'
             );
             b = b.exec(a);
             if (!b) return null;
