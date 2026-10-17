@@ -179,10 +179,15 @@ export class LinkedinPageProvider
   }
 
   async fetchPageInformation(accessToken: string, params: { page: string }) {
-    const pageId = params.page;
+    const pageId = String(params.page);
+    if (!/^\d+$/.test(pageId)) {
+      throw new Error('Invalid LinkedIn organization id');
+    }
     const data = await (
       await fetch(
-        `https://api.linkedin.com/v2/organizations/${pageId}?projection=(id,localizedName,vanityName,logoV2(original~:playableStreams))`,
+        `https://api.linkedin.com/v2/organizations/${encodeURIComponent(
+          pageId
+        )}?projection=(id,localizedName,vanityName,logoV2(original~:playableStreams))`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,

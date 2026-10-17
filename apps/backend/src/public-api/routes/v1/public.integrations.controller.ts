@@ -34,7 +34,13 @@ import { UploadDto } from '@gitroom/nestjs-libraries/dtos/media/upload.dto';
 import { NotificationService } from '@gitroom/nestjs-libraries/database/prisma/notifications/notification.service';
 import { GetNotificationsDto } from '@gitroom/nestjs-libraries/dtos/notifications/get.notifications.dto';
 import axios from 'axios';
+import net from 'node:net';
 import { Readable } from 'stream';
+import {
+  assertSafeOutboundUrl,
+  safeLookup,
+} from '@gitroom/nestjs-libraries/security/outbound.url';
+import { isBlockedIp } from '@gitroom/nestjs-libraries/dtos/webhooks/webhook.url.validator';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { fromBuffer } = require('file-type');
 
@@ -96,9 +102,37 @@ export class PublicIntegrationsController {
     @Body() body: UploadDto
   ) {
     Sentry.metrics.count('public_api-request', 1);
-    const response = await axios.get(body.url, {
-      responseType: 'arraybuffer',
-    });
+    let safeUrl: URL;
+    try {
+      safeUrl = await assertSafeOutboundUrl(body.url);
+    } catch {
+      throw new HttpException({ msg: 'Blocked URL' }, 400);
+    }
+
+    const response = await axios
+      .get(safeUrl.toString(), {
+        responseType: 'arraybuffer',
+        lookup: safeLookup,
+        maxRedirects: 5,
+        beforeRedirect: (options) => {
+          // node skips `lookup` for IP literals, so check them here as well
+          const host = String(options.hostname || '').replace(/^\[|\]$/g, '');
+          if (
+            options.protocol !== 'https:' ||
+            (net.isIP(host) && isBlockedIp(host))
+          ) {
+            const err: NodeJS.ErrnoException = new Error('Blocked redirect');
+            err.code = 'EUNSAFEHOST';
+            throw err;
+          }
+        },
+      })
+      .catch((err) => {
+        if (err?.code === 'EUNSAFEHOST' || err?.cause?.code === 'EUNSAFEHOST') {
+          throw new HttpException({ msg: 'Blocked URL' }, 400);
+        }
+        throw err;
+      });
 
     const buffer = Buffer.from(response.data);
     const detected = await fromBuffer(buffer);

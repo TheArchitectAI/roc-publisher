@@ -26,7 +26,11 @@ import { pricing } from '@gitroom/nestjs-libraries/database/prisma/subscriptions
 import { Readable, pipeline } from 'stream';
 import { promisify } from 'util';
 import { OnlyURL } from '@gitroom/nestjs-libraries/dtos/webhooks/webhooks.dto';
-import { isSafePublicHttpsUrl } from '@gitroom/nestjs-libraries/dtos/webhooks/webhook.url.validator';
+import {
+  safeFetch,
+  TooManyRedirectsError,
+  UnsafeOutboundUrlError,
+} from '@gitroom/nestjs-libraries/security/outbound.url';
 
 const pump = promisify(pipeline);
 
@@ -177,44 +181,23 @@ export class PublicController {
     req.on('aborted', onClose);
     res.on('close', onClose);
 
-    // Manually follow redirects so every hop is re-validated against
-    // the SSRF blocklist (see GHSA-34w8-5j2v-h6ww). `fetch` defaults to
-    // `redirect: 'follow'`, which bypasses the DTO-level URL check.
-    const MAX_REDIRECTS = 5;
-    let currentUrl = url;
-    let r: globalThis.Response | undefined;
-    for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-      if (!(await isSafePublicHttpsUrl(currentUrl))) {
+    // safeFetch re-validates every redirect hop against the SSRF blocklist
+    // (see GHSA-34w8-5j2v-h6ww).
+    let r: globalThis.Response;
+    try {
+      r = await safeFetch(url, { signal: ac.signal });
+    } catch (err) {
+      if (err instanceof UnsafeOutboundUrlError) {
         return res.status(400).send('Blocked URL');
       }
-
-      r = await fetch(currentUrl, {
-        signal: ac.signal,
-        redirect: 'manual',
-      });
-
-      if (r.status >= 300 && r.status < 400) {
-        const location = r.headers.get('location');
-        if (!location) {
-          return res.status(502).send('Redirect without Location');
-        }
-        try {
-          currentUrl = new URL(location, currentUrl).toString();
-        } catch {
-          return res.status(400).send('Invalid redirect target');
-        }
-        continue;
+      if (err instanceof TooManyRedirectsError) {
+        return res.status(508).send('Too many redirects');
       }
-
-      break;
+      throw err;
     }
 
-    if (!r) {
-      return res.status(502).send('No upstream response');
-    }
-
-    if (r.status >= 300 && r.status < 400) {
-      return res.status(508).send('Too many redirects');
+    if (r.status >= 300 && r.status < 400 && !r.headers.get('location')) {
+      return res.status(502).send('Redirect without Location');
     }
 
     if (!r.ok && r.status !== 206) {
