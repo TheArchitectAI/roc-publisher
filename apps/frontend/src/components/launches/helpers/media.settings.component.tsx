@@ -287,6 +287,27 @@ export const CreateThumbnail: FC<{
   );
 };
 
+const SAFE_DATA_IMAGE = /^data:image\/(png|jpeg|jpg|gif|webp);base64,/i;
+
+// Only allow blob:, base64 raster data: and http(s) URLs as an <img> src
+export const safeImageSrc = (value?: string | null): string | undefined => {
+  if (!value) {
+    return undefined;
+  }
+  if (SAFE_DATA_IMAGE.test(value)) {
+    return value;
+  }
+  try {
+    const url = new URL(value, window.location.origin);
+    if (['blob:', 'http:', 'https:'].includes(url.protocol)) {
+      return value;
+    }
+  } catch (e) {
+    return undefined;
+  }
+  return undefined;
+};
+
 export const MediaComponentInner: FC<{
   onClose: () => void;
   onSelect: (media: {
@@ -382,13 +403,13 @@ export const MediaComponentInner: FC<{
             {!isEditingThumbnail ? (
               <div className="flex flex-col">
                 {/* Show existing thumbnail if it exists */}
-                {(newThumbnail || thumbnail) && (
+                {safeImageSrc(newThumbnail || thumbnail) && (
                   <div className="flex flex-col space-y-2">
                     <span className="text-sm text-textColor">
                       Current Thumbnail:
                     </span>
                     <img
-                      src={newThumbnail || thumbnail}
+                      src={safeImageSrc(newThumbnail || thumbnail)}
                       alt="Current thumbnail"
                       className="max-w-full max-h-[500px] object-contain rounded-lg border border-tableBorder"
                     />
