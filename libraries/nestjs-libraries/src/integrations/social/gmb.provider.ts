@@ -301,6 +301,10 @@ export class GmbProvider extends SocialAbstract implements SocialProvider {
   ) {
     // data.id is the full resource path: accounts/{accountId}/locations/{locationId}
     // data.locationName is the v1 API format: locations/{locationId}
+    if (!/^locations\/[A-Za-z0-9_-]+$/.test(String(data.locationName))) {
+      throw new Error('Invalid Google Business location name');
+    }
+
     // Fetch location details using the v1 API format
     const locationResponse = await fetch(
       `https://mybusinessbusinessinformation.googleapis.com/v1/${data.locationName}?readMask=name,title,storefrontAddress,metadata`,

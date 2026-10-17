@@ -14,6 +14,10 @@ import slugify from 'slugify';
 import axios from 'axios';
 import { Tool } from '@gitroom/nestjs-libraries/integrations/tool.decorator';
 import { string } from 'yup';
+import {
+  assertSafeOutboundUrl,
+  safeFetch,
+} from '@gitroom/nestjs-libraries/security/outbound.url';
 
 export class WordpressProvider
   extends SocialAbstract
@@ -98,15 +102,26 @@ export class WordpressProvider
       password: string;
     };
     try {
+      const domainUrl = await assertSafeOutboundUrl(body.domain, {
+        allowHttp: true,
+      });
+      const domain = (domainUrl.origin + domainUrl.pathname).replace(
+        /\/+$/,
+        ''
+      );
       const auth = Buffer.from(`${body.username}:${body.password}`).toString(
         'base64'
       );
       const { id, name, avatar_urls, code } = await (
-        await fetch(`${body.domain}/wp-json/wp/v2/users/me`, {
-          headers: {
-            Authorization: `Basic ${auth}`,
+        await safeFetch(
+          `${domain}/wp-json/wp/v2/users/me`,
+          {
+            headers: {
+              Authorization: `Basic ${auth}`,
+            },
           },
-        })
+          { allowHttp: true }
+        )
       ).json();
 
       if (code) {

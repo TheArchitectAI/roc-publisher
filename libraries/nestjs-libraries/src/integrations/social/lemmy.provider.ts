@@ -11,6 +11,7 @@ import { Integration } from '@prisma/client';
 import { AuthService } from '@gitroom/helpers/auth/auth.service';
 import { LemmySettingsDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/lemmy.dto';
 import { Tool } from '@gitroom/nestjs-libraries/integrations/tool.decorator';
+import { safeFetch } from '@gitroom/nestjs-libraries/security/outbound.url';
 
 export class LemmyProvider extends SocialAbstract implements SocialProvider {
   override maxConcurrentJob = 3; // Lemmy instances typically have moderate limits
@@ -76,30 +77,45 @@ export class LemmyProvider extends SocialAbstract implements SocialProvider {
   }) {
     const body = JSON.parse(Buffer.from(params.code, 'base64').toString());
 
-    const load = await fetch(body.service + '/api/v3/user/login', {
-      body: JSON.stringify({
-        username_or_email: body.identifier,
-        password: body.password,
-      }),
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    let jwt: string;
+    try {
+      const load = await safeFetch(
+        body.service + '/api/v3/user/login',
+        {
+          body: JSON.stringify({
+            username_or_email: body.identifier,
+            password: body.password,
+          }),
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+        { allowHttp: true }
+      );
 
-    if (load.status === 401) {
+      if (load.status === 401) {
+        return 'Invalid credentials';
+      }
+
+      ({ jwt } = await load.json());
+    } catch (e) {
+      console.log(e);
       return 'Invalid credentials';
     }
 
-    const { jwt } = await load.json();
-
     try {
       const user = await (
-        await fetch(body.service + `/api/v3/user?username=${body.identifier}`, {
-          headers: {
-            Authorization: `Bearer ${jwt}`,
+        await safeFetch(
+          body.service +
+            `/api/v3/user?username=${encodeURIComponent(body.identifier)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${jwt}`,
+            },
           },
-        })
+          { allowHttp: true }
+        )
       ).json();
 
       return {
@@ -126,16 +142,20 @@ export class LemmyProvider extends SocialAbstract implements SocialProvider {
     );
 
     const { jwt } = await (
-      await fetch(body.service + '/api/v3/user/login', {
-        body: JSON.stringify({
-          username_or_email: body.identifier,
-          password: body.password,
-        }),
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      await safeFetch(
+        body.service + '/api/v3/user/login',
+        {
+          body: JSON.stringify({
+            username_or_email: body.identifier,
+            password: body.password,
+          }),
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      })
+        { allowHttp: true }
+      )
     ).json();
 
     return { jwt, service: body.service };
@@ -164,30 +184,34 @@ export class LemmyProvider extends SocialAbstract implements SocialProvider {
         nsfw: false,
       });
       const { post_view } = await (
-        await fetch(service + '/api/v3/post', {
-          body: JSON.stringify({
-            community_id: +lemmy.value.id,
-            name: lemmy.value.title,
-            body: firstPost.message,
-            ...(lemmy.value.url
-              ? {
-                  url:
-                    lemmy.value.url.indexOf('http') === -1
-                      ? `https://${lemmy.value.url}`
-                      : lemmy.value.url,
-                }
-              : {}),
-            ...(firstPost.media?.length
-              ? { custom_thumbnail: firstPost.media[0].path }
-              : {}),
-            nsfw: false,
-          }),
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${jwt}`,
-            'Content-Type': 'application/json',
+        await safeFetch(
+          service + '/api/v3/post',
+          {
+            body: JSON.stringify({
+              community_id: +lemmy.value.id,
+              name: lemmy.value.title,
+              body: firstPost.message,
+              ...(lemmy.value.url
+                ? {
+                    url:
+                      lemmy.value.url.indexOf('http') === -1
+                        ? `https://${lemmy.value.url}`
+                        : lemmy.value.url,
+                  }
+                : {}),
+              ...(firstPost.media?.length
+                ? { custom_thumbnail: firstPost.media[0].path }
+                : {}),
+              nsfw: false,
+            }),
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${jwt}`,
+              'Content-Type': 'application/json',
+            },
           },
-        })
+          { allowHttp: true }
+        )
       ).json();
 
       valueArray.push({
@@ -225,17 +249,21 @@ export class LemmyProvider extends SocialAbstract implements SocialProvider {
 
     for (const singlePostId of postIds) {
       const { comment_view } = await (
-        await fetch(service + '/api/v3/comment', {
-          body: JSON.stringify({
-            post_id: +singlePostId,
-            content: commentPost.message,
-          }),
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${jwt}`,
-            'Content-Type': 'application/json',
+        await safeFetch(
+          service + '/api/v3/comment',
+          {
+            body: JSON.stringify({
+              post_id: +singlePostId,
+              content: commentPost.message,
+            }),
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${jwt}`,
+              'Content-Type': 'application/json',
+            },
           },
-        })
+          { allowHttp: true }
+        )
       ).json();
 
       valueArray.push({
@@ -275,13 +303,17 @@ export class LemmyProvider extends SocialAbstract implements SocialProvider {
     const { jwt, service } = await this.getJwtAndService(integration);
 
     const { communities } = await (
-      await fetch(
-        service + `/api/v3/search?type_=Communities&sort=Active&q=${data.word}`,
+      await safeFetch(
+        service +
+          `/api/v3/search?type_=Communities&sort=Active&q=${encodeURIComponent(
+            data.word
+          )}`,
         {
           headers: {
             Authorization: `Bearer ${jwt}`,
           },
-        }
+        },
+        { allowHttp: true }
       )
     ).json();
 

@@ -1,6 +1,7 @@
 import { timer } from '@gitroom/helpers/utils/timer';
 import { Integration } from '@prisma/client';
 import { ApplicationFailure } from '@temporalio/activity';
+import { safeFetch } from '@gitroom/nestjs-libraries/security/outbound.url';
 
 export class RefreshToken extends ApplicationFailure {
   constructor(identifier: string, json: string, body: BodyInit, message = '') {
@@ -105,7 +106,8 @@ export abstract class SocialAbstract {
     totalRetries = 0,
     ignoreConcurrency = false
   ): Promise<Response> {
-    const request = await fetch(url, options);
+    // http is allowed because self-hosted providers (listmonk, mastodon, ...) may use it
+    const request = await safeFetch(url, options, { allowHttp: true });
 
     if (request.status === 200 || request.status === 201) {
       return request;

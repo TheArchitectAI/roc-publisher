@@ -502,15 +502,29 @@ export class InstagramProvider
     accessToken: string,
     data: { pageId: string; id: string }
   ) {
+    const pageId = String(data.pageId);
+    const igId = String(data.id);
+    if (!/^\d+$/.test(pageId) || !/^\d+$/.test(igId)) {
+      throw new Error('Invalid Instagram page or account id');
+    }
+
     const { access_token, ...all } = await (
       await fetch(
-        `https://graph.facebook.com/v20.0/${data.pageId}?fields=access_token,name,picture.type(large)&access_token=${accessToken}`
+        `https://graph.facebook.com/v20.0/${encodeURIComponent(
+          pageId
+        )}?fields=access_token,name,picture.type(large)&access_token=${encodeURIComponent(
+          accessToken
+        )}`
       )
     ).json();
 
     const { id, name, profile_picture_url, username } = await (
       await fetch(
-        `https://graph.facebook.com/v20.0/${data.id}?fields=username,name,profile_picture_url&access_token=${accessToken}`
+        `https://graph.facebook.com/v20.0/${encodeURIComponent(
+          igId
+        )}?fields=username,name,profile_picture_url&access_token=${encodeURIComponent(
+          accessToken
+        )}`
       )
     ).json();
 
